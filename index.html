@@ -638,6 +638,72 @@ hr{border:none;border-top:1px solid var(--border);}
 .ft-storico-mese { font-size:.78rem; font-weight:600; color:var(--accent); min-width:38px; }
 .ft-storico-num { font-family:monospace; font-size:.88rem; font-weight:700; flex:1; color:var(--text); }
 
+/* ════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE (≤ 900px)
+   ════════════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  html, body { height:auto !important; overflow:auto !important; font-size:14px; }
+  .container { height:auto !important; max-width:100% !important; padding:8px !important; gap:8px !important; }
+
+  .header { flex-wrap:wrap !important; padding:8px 10px !important; gap:8px !important; }
+  .app-title { font-size:.95rem !important; }
+  .tabs { width:100% !important; order:5; }
+  .tab-btn { flex:1; padding:10px 6px !important; font-size:13px !important; }
+
+  .main-layout { flex-direction:column !important; gap:10px !important; overflow:visible !important; }
+
+  .sidebar-mesi { width:100% !important; }
+  .mesi-box { max-height:none !important; }
+  .mesi-list { flex-direction:row !important; overflow-x:auto !important; }
+  .mese-row { flex-shrink:0 !important; min-width:110px; border-bottom:none !important; border-right:1px solid var(--border); flex-direction:column; gap:2px !important; padding:8px 10px !important; }
+  .mese-nome { font-size:.85rem !important; }
+  .mese-totale { font-size:.78rem !important; }
+  .mini-cal-wrap { padding:10px !important; }
+  .mini-cal-day { font-size:.85rem !important; padding:8px 1px !important; min-height:28px; }
+  .mini-cal-dow { font-size:.7rem !important; padding:4px 0 6px !important; }
+
+  .content-col { width:100% !important; overflow:visible !important; }
+
+  .sidebar { width:100% !important; }
+  .notes-box { max-height:none !important; }
+
+  button, .btn, input[type=button], input[type=submit] {
+    min-height:38px;
+    font-size:.92rem !important;
+  }
+  input[type=text], input[type=number], input[type=date], input[type=search], select, textarea {
+    font-size:16px !important;
+    padding:10px 12px !important;
+  }
+
+  .modal {
+    width:100% !important; max-width:100% !important;
+    height:100% !important; max-height:100% !important;
+    margin:0 !important; border-radius:0 !important;
+    top:0 !important; left:0 !important;
+  }
+  .modal-content, .modal-body { padding:12px !important; }
+
+  .week-grid { grid-template-columns:repeat(2,1fr) !important; gap:6px !important; }
+
+  .day-view-bar { padding:10px 12px !important; }
+  .day-view-bar-title { font-size:.95rem !important; }
+
+  .registro-row, .lista-row, .ft-row { padding:12px 10px !important; }
+
+  .fatture-tabella, .registro-tabella, table { display:block; overflow-x:auto; white-space:nowrap; }
+
+  .desktop-only { display:none !important; }
+}
+
+@media (max-width: 480px) {
+  .app-title { font-size:.88rem !important; }
+  .tab-btn { padding:9px 4px !important; font-size:12px !important; }
+  .mese-row { min-width:95px; padding:7px 8px !important; }
+  .week-grid { grid-template-columns:1fr !important; }
+  .theme-toggle { padding:5px 10px !important; font-size:11px !important; }
+}
+
 </style>
 </head>
 <body>
@@ -2421,64 +2487,4 @@ function ftOpenStorico(clientId){
     const lblNum = document.createElement('span');
     lblNum.style.cssText = 'font-size:.68rem;font-weight:600;color:var(--text-muted);flex:1;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:4px;';
     lblNum.innerHTML = 'N° Fattura';
-    const btnAsc = document.createElement('button');
-    btnAsc.textContent = '↑';
-    btnAsc.title = 'Ordina crescente';
-    btnAsc.style.cssText = 'background:none;border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px;cursor:pointer;color:'+(ftSortDir==='num-asc'?'var(--accent)':'var(--text-muted)')+';font-weight:'+(ftSortDir==='num-asc'?'700':'400')+';';
-    const btnDesc = document.createElement('button');
-    btnDesc.textContent = '↓';
-    btnDesc.title = 'Ordina decrescente';
-    btnDesc.style.cssText = 'background:none;border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px;cursor:pointer;color:'+(ftSortDir==='num-desc'?'var(--accent)':'var(--text-muted)')+';font-weight:'+(ftSortDir==='num-desc'?'700':'400')+';';
-    btnAsc.onclick  = ()=>{ftSortDir = ftSortDir==='num-asc'?'mese':'num-asc';  renderFtStorico();};
-    btnDesc.onclick = ()=>{ftSortDir = ftSortDir==='num-desc'?'mese':'num-desc'; renderFtStorico();};
-    lblNum.appendChild(btnAsc);
-    lblNum.appendChild(btnDesc);
-    hdr.appendChild(lblMese);
-    hdr.appendChild(lblNum);
-    list.appendChild(hdr);
-
-    sorted.forEach(({nomeMese, f}) => {
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);margin-bottom:3px;';
-      const stato = f.paid
-        ? '<span style="font-size:.75rem;font-weight:700;color:var(--green);">✓ Saldata</span>'
-        : '<span style="font-size:.75rem;font-weight:700;color:var(--red);">✗ Non saldata</span>';
-      row.innerHTML = '<span style="font-size:.78rem;font-weight:600;color:var(--accent);min-width:90px;">'+nomeMese+'</span><span style="font-family:monospace;font-size:.88rem;font-weight:700;flex:1;">N° '+ftEsc(f.numero)+'</span>'+stato;
-      list.appendChild(row);
-    });
-  }
-
-  renderFtStorico();
-  document.getElementById('storicoCount').textContent = fatture.length+(fatture.length!==1?' fatture':' fattura')+' · '+ftYear;
-  document.getElementById('overlay').classList.add('show');
-  document.getElementById('storicoModal').classList.add('show');
-  // nasconde il pulsante Rinomina (è solo per il Registro, non le Fatture)
-  const btnRin=document.getElementById('btnRinominaStorico');
-  if(btnRin)btnRin.style.display='none';
-  chiudiRinominaStorico();
-}
-
-
-
-
-function filterStorico(){
-  const q = document.getElementById('storicoSearch').value.trim().toLowerCase();
-  const clr = document.getElementById('storicoSearchClear');
-  if(clr) clr.style.display = q ? 'block' : 'none';
-  document.querySelectorAll('#storicoList .storico-variante').forEach(el=>{
-    const nome = (el.dataset.nome||'').toLowerCase();
-    el.style.display = (!q || nome.includes(q)) ? '' : 'none';
-  });
-}
-
-function clearStoricoSearch(){
-  const inp = document.getElementById('storicoSearch');
-  if(inp){ inp.value=''; }
-  const clr = document.getElementById('storicoSearchClear');
-  if(clr) clr.style.display='none';
-  document.querySelectorAll('#storicoList .storico-variante').forEach(el=>el.style.display='');
-}
-
-</script>
-</body>
-</html>
+   

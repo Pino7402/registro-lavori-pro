@@ -638,48 +638,6 @@ hr{border:none;border-top:1px solid var(--border);}
 .ft-storico-mese { font-size:.78rem; font-weight:600; color:var(--accent); min-width:38px; }
 .ft-storico-num { font-family:monospace; font-size:.88rem; font-weight:700; flex:1; color:var(--text); }
 
-
-/* ════════════════════════════════════════════════════════════════
-   MOBILE RESPONSIVE
-   ════════════════════════════════════════════════════════════════ */
-@media (max-width: 900px) {
-  html, body { height:auto !important; overflow:auto !important; font-size:14px; }
-  .container { height:auto !important; max-width:100% !important; padding:8px !important; gap:8px !important; }
-  .header { flex-wrap:wrap !important; padding:8px 10px !important; gap:8px !important; }
-  .app-title { font-size:.95rem !important; }
-  .tabs { width:100% !important; order:5; }
-  .tab-btn { flex:1; padding:10px 6px !important; font-size:13px !important; }
-  .main-layout { flex-direction:column !important; gap:10px !important; overflow:visible !important; }
-  .sidebar-mesi { width:100% !important; }
-  .mesi-box { max-height:none !important; }
-  .mesi-list { flex-direction:row !important; overflow-x:auto !important; }
-  .mese-row { flex-shrink:0 !important; min-width:110px; border-bottom:none !important; border-right:1px solid var(--border); flex-direction:column; gap:2px !important; padding:8px 10px !important; }
-  .mese-nome { font-size:.85rem !important; }
-  .mese-totale { font-size:.78rem !important; }
-  .mini-cal-wrap { padding:10px !important; }
-  .mini-cal-day { font-size:.85rem !important; padding:8px 1px !important; min-height:28px; }
-  .mini-cal-dow { font-size:.7rem !important; padding:4px 0 6px !important; }
-  .content-col { width:100% !important; overflow:visible !important; }
-  .sidebar { width:100% !important; }
-  .notes-box { max-height:none !important; }
-  button, .btn, input[type=button], input[type=submit] { min-height:38px; font-size:.92rem !important; }
-  input[type=text], input[type=number], input[type=date], input[type=search], select, textarea { font-size:16px !important; padding:10px 12px !important; }
-  .modal { width:100% !important; max-width:100% !important; height:100% !important; max-height:100% !important; margin:0 !important; border-radius:0 !important; top:0 !important; left:0 !important; }
-  .modal-content, .modal-body { padding:12px !important; }
-  .week-grid { grid-template-columns:repeat(2,1fr) !important; gap:6px !important; }
-  .day-view-bar { padding:10px 12px !important; }
-  .day-view-bar-title { font-size:.95rem !important; }
-  .registro-row, .lista-row, .ft-row { padding:12px 10px !important; }
-  .fatture-tabella, .registro-tabella, table { display:block; overflow-x:auto; white-space:nowrap; }
-}
-@media (max-width: 480px) {
-  .app-title { font-size:.88rem !important; }
-  .tab-btn { padding:9px 4px !important; font-size:12px !important; }
-  .mese-row { min-width:95px; padding:7px 8px !important; }
-  .week-grid { grid-template-columns:1fr !important; }
-}
-
-
 </style>
 </head>
 <body>
@@ -748,8 +706,9 @@ hr{border:none;border-top:1px solid var(--border);}
       <button class="btn-green" onclick="downloadBackup('entrambi')">✅ Tutto</button>
       <button onclick="downloadBackup('registro')">📋 Registro</button>
       <button onclick="downloadBackup('lista')">📝 Lista</button>
-      <button onclick="downloadBackup('fatture')">📄 Fatture</button>
+      <button style="background:#229ED9;color:#fff;border:none;" onclick="sendBackupToTelegram()">📤 Telegram</button>
     </div>
+    <div id="backupStatus" style="font-size:.75rem;color:var(--text-muted);margin-top:6px;text-align:center;min-height:16px;"></div>
   </div>
   <hr>
   <div>
@@ -1681,12 +1640,21 @@ function addRiga(focusNome){
   if(focusNome) setTimeout(()=>nomeEl.focus(),50);
 }
 function removeRiga(btn){const c=document.getElementById('righe-container');if(c.children.length<=1)return;btn.closest('.riga-lavoro').remove();}
+// ── Sync real-time con bot Telegram ─────────────────────────────────────────
+const _SYNC_URL='https://web-production-55827.up.railway.app/sync-lavoro';
+function syncLavoro(op,payload){
+  // fire-and-forget: non blocca l'UI, ignora errori silenziosamente
+  fetch(_SYNC_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(op==='delete'?{op,id:payload}:{op,lavoro:payload})
+  }).catch(()=>{});
+}
+
 async function saveMulti(){
   const data=document.getElementById("data").value;if(!data)return alert("Inserisci la data!");
   const righe=[...document.querySelectorAll('.riga-lavoro')],lavori=[];
   for(const riga of righe){const id=riga.dataset.id,nome=document.getElementById(`r-nome-${id}`).value.trim(),nota=document.getElementById(`r-nota-${id}`).value.trim(),prezzo=parseFloat(document.getElementById(`r-prezzo-${id}`).value.replace(",","."));const ore=document.getElementById(`r-ore-${id}`).value,min=document.getElementById(`r-min-${id}`).value;const tempo=(ore!==''||min!=='')?{ore:ore!==''?parseInt(ore):0,min:min!==''?parseInt(min):0}:null;if(!nome&&isNaN(prezzo))continue;if(!nome||isNaN(prezzo))return alert("Compila Nome e Prezzo in tutte le righe!");lavori.push({id:Date.now()+lavori.length,data,descrizione:nome,nota,prezzo,tempo});}
   if(!lavori.length)return alert("Inserisci almeno un lavoro!");lastUsedDate=data;
-  const tx=db.transaction('lavori','readwrite');lavori.forEach(l=>tx.objectStore('lavori').put(l));tx.oncomplete=()=>{renderRegistro();closeForm();setTimeout(showBackupPopupNow,300);};
+  const tx=db.transaction('lavori','readwrite');lavori.forEach(l=>tx.objectStore('lavori').put(l));tx.oncomplete=()=>{renderRegistro();closeForm();setTimeout(showBackupPopupNow,300);lavori.forEach(l=>syncLavoro('add',l));};
 }
 async function editItem(id){
   const all=await getLavori(),l=all.find(x=>x.id===id);rigaCounter=0;
@@ -1700,9 +1668,10 @@ async function saveEdit(id){
   const ore=document.getElementById(`r-ore-0`).value,min=document.getElementById(`r-min-0`).value;
   const tempo=(ore!==''||min!=='')?{ore:ore!==''?parseInt(ore):0,min:min!==''?parseInt(min):0}:null;
   if(!nome||isNaN(prezzo)||!data)return alert("Compila tutti i campi!");
-  const tx=db.transaction('lavori','readwrite');tx.objectStore('lavori').put({id,data,descrizione:nome,nota,prezzo,tempo});tx.oncomplete=()=>{renderRegistro();closeForm();document.getElementById("btnSalva").onclick=saveMulti;setTimeout(showBackupPopupNow,300);};
+  const lavoro={id,data,descrizione:nome,nota,prezzo,tempo};
+  const tx=db.transaction('lavori','readwrite');tx.objectStore('lavori').put(lavoro);tx.oncomplete=()=>{renderRegistro();closeForm();document.getElementById("btnSalva").onclick=saveMulti;setTimeout(showBackupPopupNow,300);syncLavoro('edit',lavoro);};
 }
-async function removeItem(id){if(!confirm("Eliminare questo lavoro?"))return;const tx=db.transaction('lavori','readwrite');tx.objectStore('lavori').delete(id);tx.oncomplete=()=>{renderRegistro();setTimeout(showBackupPopupNow,300);};}
+async function removeItem(id){if(!confirm("Eliminare questo lavoro?"))return;const tx=db.transaction('lavori','readwrite');tx.objectStore('lavori').delete(id);tx.oncomplete=()=>{renderRegistro();setTimeout(showBackupPopupNow,300);syncLavoro('delete',id);};}
 function prevMonth(){currentMonth.setMonth(currentMonth.getMonth()-1);renderRegistro();}
 function nextMonth(){currentMonth.setMonth(currentMonth.getMonth()+1);renderRegistro();}
 function goToToday(){currentMonth=new Date();document.getElementById("search").value="";renderRegistro();}
@@ -1742,6 +1711,21 @@ async function ftRestoreData(data){
   if(data.fatture) for(const f of data.fatture) await ftDbPut(FT_STORE_FAT,f);
   await ftLoadAll();
 }
+async function sendBackupToTelegram(){
+  const status=document.getElementById('backupStatus');
+  if(status){status.style.color='var(--text-muted)';status.textContent='⏳ Invio incrementale a Telegram...';}
+  try{
+    const lavori=await getLavori();
+    const resp=await fetch('https://web-production-55827.up.railway.app/invia-backup',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({lavori,incrementale:true})
+    });
+    const json=await resp.json();
+    if(json.ok){if(status){status.style.color='#4caf50';status.textContent='✅ Inviato! Apri Telegram per confermare la sync.';}return true;}
+    if(status){status.style.color='#f44336';status.textContent='❌ Errore: '+(json.error||'risposta non valida');}return false;
+  }catch(e){if(status){status.style.color='#f44336';status.textContent='❌ '+e.message;}return false;}
+}
 async function downloadBackup(tipo){
   const payload={version:2,tipo};
   if(tipo==='registro'||tipo==='entrambi')payload.lavori=await getLavori();
@@ -1753,7 +1737,8 @@ async function downloadBackup(tipo){
   }
   const now=new Date(),ts=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
   const nomeFile={entrambi:'tutto',registro:'registro',lista:'lista',fatture:'fatture'}[tipo]||tipo;
-  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`backup_${nomeFile}_${ts}.json`;a.click();closeAll();
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`backup_${nomeFile}_${ts}.json`;a.click();
+  if(tipo==='entrambi'){await sendBackupToTelegram();setTimeout(closeAll,2200);}else{closeAll();}
 }
 function uploadBackup(){
   const input=document.createElement("input");input.type="file";input.accept=".json";

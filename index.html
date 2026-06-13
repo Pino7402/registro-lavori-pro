@@ -1722,7 +1722,7 @@ async function sendBackupToTelegram(){
       body:JSON.stringify({lavori,incrementale:true})
     });
     const json=await resp.json();
-    if(json.ok){if(status){status.style.color='#4caf50';status.textContent='✅ Inviato! Apri Telegram per confermare la sync.';}return true;}
+    if(json.ok){if(status){status.style.color='#4caf50';status.textContent='✅ Inviato! Controlla Telegram per il riepilogo.';}return true;}
     if(status){status.style.color='#f44336';status.textContent='❌ Errore: '+(json.error||'risposta non valida');}return false;
   }catch(e){if(status){status.style.color='#f44336';status.textContent='❌ '+e.message;}return false;}
 }
@@ -2508,4 +2508,4 @@ function clearStoricoSearch(){
 
 </script>
 </body>
-</html>
+</html> 

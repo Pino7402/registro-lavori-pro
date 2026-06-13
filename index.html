@@ -1737,8 +1737,7 @@ async function downloadBackup(tipo){
   }
   const now=new Date(),ts=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
   const nomeFile={entrambi:'tutto',registro:'registro',lista:'lista',fatture:'fatture'}[tipo]||tipo;
-  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`backup_${nomeFile}_${ts}.json`;a.click();
-  if(tipo==='entrambi'){await sendBackupToTelegram();setTimeout(closeAll,2200);}else{closeAll();}
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`backup_${nomeFile}_${ts}.json`;a.click();closeAll();
 }
 function uploadBackup(){
   const input=document.createElement("input");input.type="file";input.accept=".json";
@@ -2508,4 +2507,4 @@ function clearStoricoSearch(){
 
 </script>
 </body>
-</html> 
+</html>                                                                                        
